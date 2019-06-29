@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+/**
+ * 若是有使用过Linux或者Unix的前端开发者，对于Shebang（释伴）应该不陌生，它是一个符号的名称，#！。
+ * 这个符号通常在Unix系统的基本中第一行开头中出现，用于指明这个脚本文件的解释程序。
+ * 了解了Shebang之后就可以理解，增加这一行是为了指定用node执行脚本文件。
+ *
+ */
+
+require('commander')
+  .version(require('../package').version)
+  .usage('<command> [options]')
+  // easymock init->easymock-init
+  .command('init', '根据 ".easy-mock.js" 创建接口模板')
+  // easymock list->easymock-list
+  .command('list', '列出官方模板')
+  .parse(process.argv)
