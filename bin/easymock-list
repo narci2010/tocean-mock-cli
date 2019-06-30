@@ -20,7 +20,7 @@ axios
     if (Array.isArray(res.data)) {
       console.log('  Available official templates:')
       console.log()
-      requestBody.forEach(function(repo) {
+      requestBody.forEach(function (repo) {
         console.log(
           '  ' +
             chalk.yellow('★') +

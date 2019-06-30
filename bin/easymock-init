@@ -1,16 +1,28 @@
 #!/usr/bin/env node
 
+//是一个一致性、模块化、高性能的 JavaScript 实用工具库
 var _ = require('lodash')
+// 内置的fs模块就是文件系统模块，负责读写文件
 var fs = require('fs')
+//path 模块提供了一些用于处理文件路径的小工具
 var path = require('path')
+// commander.js可以帮助我们简化node命令行的开发
 var program = require('commander')
+// 终端字符串美化
 var chalk = require('chalk')
+// ora一个优雅的终端微调器
 var ora = require('ora')
+// Get the path to the user home directory
 var home = require('user-home')
+// A deep deletion module for node (like rm -rf)
 var rimraf = require('rimraf')
+// 为 JavaScript 提供了各种各样的加密算法。
 var crypto = require('crypto')
+// 什么是tildify，Convert an absolute path to a tilde path: /Users/sindresorhus/dev → ~/dev
 var tildify = require('tildify')
+// Download and extract a git repository (GitHub, GitLab, Bitbucket) from node.
 var download = require('download-git-repo')
+// 方便读写配置文件
 var cosmiconfig = require('cosmiconfig')
 
 var logger = require('../lib/logger')
@@ -29,7 +41,7 @@ program
 
 run()
 
-function run () {
+function run() {
   var explorer = cosmiconfig('easymock', {
     searchPlaces: [
       'package.json',
@@ -42,8 +54,22 @@ function run () {
       '.easy-mock.js'
     ]
   })
+
+  //   const spinner = ora('Loading unicorns').start()
+
+  //   setTimeout(() => {
+  //     spinner.color = 'yellow'
+  //     spinner.text = 'Loading rainbows'
+  //   }, 1000)
+
+  // You can also search and load synchronously.
+  // 同步 load和search
   var search = explorer.searchSync()
-  var projectPath = program.args[0] ? path.resolve(process.cwd(), program.args[0]) : process.cwd()
+
+  //项目当前路径，如果有子目录，作为命令参数传入，没参数，就是当前命令的路径
+  var projectPath = program.args[0]
+    ? path.resolve(process.cwd(), program.args[0])
+    : process.cwd()
 
   if (!search) {
     logger.fatal('找不到 ".easy-mock.js" 配置文件.')
@@ -51,8 +77,16 @@ function run () {
 
   var config = search.config
   var template = config.template || 'axios'
+
+  // 模板字符串存在/ 则不是官方模板
   var hasSlash = template.indexOf('/') > -1
-  var hash = crypto.createHash('sha256').update(template).digest('hex')
+  var hash = crypto
+    .createHash('sha256')
+    .update(template)
+    .digest('hex')
+
+  // tmp是临时存放模板文件的路径，hash是为了防止重复目录名称
+  // 还有就是缓存模板在本地目录
   var tmp = path.join(home, '.easy-mock-templates', hash)
 
   if (program.offline) {
@@ -62,7 +96,10 @@ function run () {
 
   // check if template is local
   if (isLocalPath(template)) {
+    // 如果模板以 . / a:/打头，则是本地模板
+    // 缓存和本地模板值不一样 template绝对路径：缓存模板
     var templatePath = getTemplatePath(template, projectPath)
+
     if (fs.existsSync(templatePath)) {
       generate(projectPath, templatePath, config, generateDone)
     } else {
@@ -72,6 +109,7 @@ function run () {
     checkVersion(() => {
       if (!hasSlash) {
         // use official templates
+        // easy-mock-templates/axios
         var officialTemplate = 'easy-mock-templates/' + template
         downloadAndGenerate(officialTemplate, tmp, projectPath, config)
       } else {
@@ -81,23 +119,33 @@ function run () {
   }
 }
 
-function downloadAndGenerate (template, tmp, projectPath, config) {
+function downloadAndGenerate(template, tmp, projectPath, config) {
   var spinner = ora('正在下载模板.')
   spinner.start()
   // Remove if local template exists
   if (fs.existsSync(tmp)) rimraf.sync(tmp)
-  download(template, tmp, {
-    clone: program.clone || false
-  }, function (err) {
-    spinner.stop()
-    if (err) logger.fatal('模板下载失败 ' + template + ': ' + err.message.trim())
-    generate(projectPath, tmp, config, generateDone)
-  })
+  // https://github.com/easy-mock-templates/axios
+  download(
+    template,
+    tmp,
+    {
+      clone: program.clone || false
+    },
+    function(err) {
+      spinner.stop()
+      if (err) {
+        logger.fatal('模板下载失败 ' + template + ': ' + err.message.trim())
+      } else {
+        // 模板下载没出错，才下载
+        generate(projectPath, tmp, config, generateDone)
+      }
+    }
+  )
 }
 
-function generateDone (error, files) {
+function generateDone(error, files) {
   if (error) logger.fatal(error)
-  _.forEach(files, (file) => {
+  _.forEach(files, file => {
     logger.success('"%s" 创建成功.', chalk.yellow(tildify(file)))
   })
 }
