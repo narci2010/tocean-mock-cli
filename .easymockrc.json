@@ -1,0 +1,11 @@
+{
+  "host": "http://devos.toceansoft.com:7300",
+  "output": "src/api",
+  "template": "axios",
+  "projects": [
+    {
+      "id": "5d146c6b3505c600844d1a74",
+      "name": "devos"
+    }
+  ]
+}
